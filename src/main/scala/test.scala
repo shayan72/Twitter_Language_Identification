@@ -25,7 +25,9 @@ object test {
 
     def simpleStatusListener = new StatusListener() {
       def onStatus(status: Status) {
-        println(status.getText)
+        //          println(status.getText)
+        KafkaProducerTwitter.produce(status.getText)
+
         //        // Spark test
         //        val logFile = "README.md" // Should be some file on your system
         //        val conf = new SparkConf().setAppName("Twitter Language Identification").setMaster("local[2]").set("spark.executor.memory","1g")
@@ -56,29 +58,23 @@ object test {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
-
-    //    val twitterStream = new TwitterStreamFactory(Util.config).getInstance
-    //    twitterStream.addListener(Util.simpleStatusListener)
-    //    twitterStream.sample
-
-
     // Twitter Stream
-    //    val twitterStream = new TwitterStreamFactory(Util.config).getInstance
-    //    twitterStream.addListener(Util.simpleStatusListener)
-    //    twitterStream.sample
+    val twitterStream = new TwitterStreamFactory(Util.config).getInstance
+    twitterStream.addListener(Util.simpleStatusListener)
+    twitterStream.sample
     //    Thread.sleep(10000)
     //    twitterStream.cleanUp
     //    twitterStream.shutdown
 
 
     //    // Spark test
-    //    val logFile = "README.md" // Should be some file on your system
-    //    val conf = new SparkConf().setAppName("Twitter Language Identification").setMaster("local[2]").set("spark.executor.memory","1g")
-    //    val sc = new SparkContext(conf)
-    //    val logData = sc.textFile(logFile, 2).cache()
-    //    val numAs = logData.filter(line => line.contains("a")).count()
-    //    val numBs = logData.filter(line => line.contains("b")).count()
-    //    println(s"Lines with a: $numAs, Lines with b: $numBs")
+    //        val logFile = "README.md" // Should be some file on your system
+    //        val conf = new SparkConf().setAppName("Twitter Language Identification").setMaster("local[2]").set("spark.executor.memory","1g")
+    //        val sc = new SparkContext(conf)
+    //        val logData = sc.textFile(logFile, 2).cache()
+    //        val numAs = logData.filter(line => line.contains("a")).count()
+    //        val numBs = logData.filter(line => line.contains("b")).count()
+    //        println(s"Lines with a: $numAs, Lines with b: $numBs")
     //    sc.stop()
 
     // Spark Streaming + Kafka Integration
@@ -92,13 +88,12 @@ object test {
       "enable.auto.commit" -> (false: java.lang.Boolean))
 
     val topics = List("twitter-topic").toSet
-    val lines = KafkaUtils.createDirectStream[String, String](ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams)).map(record => record.value)
+    val lines = KafkaUtils.createDirectStream[String, String](ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams))
 
-    val wordCounts = lines.map(line => line.split(" ").size).map(word => (word, 1)).reduceByKey((a, b) => a + b)
+    val wordCounts = lines.count()
     wordCounts.print()
 
     ssc.start()
     ssc.awaitTermination()
-
   }
 }
