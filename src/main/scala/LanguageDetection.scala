@@ -37,8 +37,8 @@ object LanguageDetection {
 
     stream.foreachRDD { rdd =>
       val tweet_rdd = rdd.map(line => line.value).flatMap{ line =>
-        var trigrams = TextProcessing.create_trigrams(line)
-        trigrams
+        var ngrams = TextProcessing.create_ngrams(line, 3)
+        ngrams
       }
 
       tweet_rdd.collect().foreach(println)
