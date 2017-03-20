@@ -41,7 +41,7 @@ object CommonNgrams {
 //    for (language <- languages) {
       // Start recieving tweets
       TwitterStreamingAPI.streamingClient.sampleStatuses(languages = Seq(language), stall_warnings = true)(TwitterStreamingAPI.TweetTextToKafka("twitter-topic"))
-      getCommonNgramsInLanguage(Language.English, Array(2, 3)) // Bi-grams and Tri-grams
+      getCommonNgramsInLanguage(language, Array(2, 3)) // Bi-grams and Tri-grams
 //    }
   }
 
