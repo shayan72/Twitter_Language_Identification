@@ -19,4 +19,8 @@ object TwitterStreamingAPI {
     case tweet: Tweet => KafkaProducer.produce(tweet.text, topic)
   }
 
+  def TweetTextLangToKafka(topic: String): PartialFunction[StreamingMessage, Unit] = {
+    case tweet: Tweet => KafkaProducer.produce(tweet.lang.get + ", " + tweet.text, topic)
+  }
+
 }

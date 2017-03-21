@@ -23,8 +23,6 @@ object CommonNgrams {
     val conf = new SparkConf().setAppName("CommonNgrams").setMaster("local[*]")
     val sc = new SparkContext(conf)
 
-    val limit = 3
-
     // Kafka Configuration
     val kafkaParams = mapAsJavaMap(Map[String, Object]("bootstrap.servers" -> "localhost:9092",
       "key.deserializer" -> classOf[StringDeserializer],
@@ -53,8 +51,9 @@ object CommonNgrams {
     )
 
     val batch_tweets_rdd = KafkaUtils.createRDD[String, String](sc, kafkaParams, offsetRanges, PreferConsistent).map(_.value) // ConsumerRecord
+    batch_tweets_rdd.saveAsTextFile("output/CommonNgrams/" + "tweets-" + language.toString)
 
-    batch_tweets_rdd.saveAsTextFile("output/CommonNgrams/" + "tweets-" + language.toString + ".txt")
+//    val batch_tweets_rdd = sc.textFile("output/CommonNgrams/" + "tweets-" + language.toString + ".txt") // Load!
 
     for (n <- ngrams) {
       var ngrams_count = batch_tweets_rdd.flatMap { line =>

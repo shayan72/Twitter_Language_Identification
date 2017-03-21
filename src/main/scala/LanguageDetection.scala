@@ -1,6 +1,7 @@
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.SparkConf
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
 import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.kafka010._
@@ -13,11 +14,11 @@ object LanguageDetection {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
-//    val sc = new SparkContext(conf)
-
     // Spark Streaming Configuration
     val conf = new SparkConf().setAppName("LanguageDetection").setMaster("local[*]")
     val ssc = new StreamingContext(conf, Seconds(1)) // Spark Streaming Context, Batch Every 1 Second
+
+//    val sc = new SparkContext(conf)
 
     // Kafka Configuration
     val kafkaParams = Map("bootstrap.servers" -> "localhost:9092",
@@ -32,22 +33,33 @@ object LanguageDetection {
     // Spark Streaming and Kafka Integration
     val stream = KafkaUtils.createDirectStream[String, String](ssc, PreferConsistent, Subscribe[String, String](topics, kafkaParams)) // ConsumerRecord
 
-//    val wordCounts = stream.count()
-//    wordCounts.print()
+    val k = 3
+    var current_k = 0
+    val streaming_kmeans = new StreamingKMeans(k);
 
     stream.foreachRDD { rdd =>
-      val tweet_rdd = rdd.map(line => line.value).flatMap{ line =>
-        var ngrams = TextProcessing.create_ngrams(line, 3)
-        ngrams
+
+      // Batch of tweets
+      var tweets = rdd.map(_.value).collect().toList
+
+      for (tweet <- tweets) {
+        var data = TextProcessing.create_feature_vector(tweet)
+
+        if (current_k < k) {
+          streaming_kmeans.addCenter(data)
+          current_k += 1
+        }
       }
 
-      tweet_rdd.collect().foreach(println)
+      streaming_kmeans.updateClusters(tweets)
+//      streaming_kmeans.printCentroids()
+      streaming_kmeans.printAccuracy()
     }
 
     ssc.start() // Start Streaming Thread
 
-//    // Twitter Stream
-    TwitterStreamingAPI.streamingClient.sampleStatuses(stall_warnings = true)(TwitterStreamingAPI.TweetTextToKafka("twitter-topic"))
+    // Twitter Stream ( return language of tweet alongside with tweet text for evaluation purposes )
+    TwitterStreamingAPI.streamingClient.sampleStatuses(stall_warnings = true)(TwitterStreamingAPI.TweetTextLangToKafka("twitter-topic"))
 
     ssc.awaitTermination()
   }
