@@ -54,7 +54,7 @@ class StreamingKMeans(k_input: Int) {
     var batch = tweets.map(_.split(", ", 2)(1)).map(TextProcessing.create_feature_vector)
     var batch_languages = tweets.map(_.split(", ", 2)(0))
 
-    var sum = Array.fill[Array[Double]](centroids.size)(Array.fill[Double](TextProcessing.bigram_features.size)(0.0))
+    var sum = Array.fill[Array[Double]](centroids.size)(Array.fill[Double](TextProcessing.ngram_features.size)(0.0))
     var m_arr = Array.fill[Int](centroids.size)(0)
 
     for (i <- 0 until batch.size) {

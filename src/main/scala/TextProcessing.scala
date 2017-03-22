@@ -5,22 +5,36 @@ import java.util.regex.{Matcher, Pattern}
   */
 object TextProcessing {
 
-  var bigram_features = Array(
-    "in", "th", "an", "er", "re", "he", "on", "or", "ou", "ng", // English
-    "es", "en", "de", "er", "ar", "os", "la", "ra", "an", "ue", // Spanish
-    "es", "le", "en", "on", "ou", "de", "re", "an", "ai", "er" // French
+  var ngram_features = Array(
+    "the", "ing", "you", "and", "for", "in", "th", "an", "er", "re", // English
+    "que", "est", "ent", "con", "sta", "es", "en", "de", "er", "ar", // Spanish
+    "ent", "our", "que", "est", "les", "es", "le", "en", "on", "ou" // French
   )
 
   def create_feature_vector(string: String) : Array[Double] = {
-    var feature_vector = Array.fill[Double](bigram_features.size)(0.0) // Initialize with zeros
+    var feature_vector = Array.fill[Double](ngram_features.size)(0.0) // Initialize with zeros
 
     var bigrams = create_ngrams(string, 2)
     for (bigram <- bigrams) {
       var i = 0
-      while (i < bigram_features.size) {
-        val bigram_feature = bigram_features(i)
+      while (i < ngram_features.size) {
+        val ngram_feature = ngram_features(i)
 
-        if (bigram == bigram_feature) {
+        if (bigram.size == 2 && bigram == ngram_feature) {
+          feature_vector(i) += 1
+        }
+
+        i += 1
+      }
+    }
+
+    var trigrams = create_ngrams(string, 3)
+    for (trigram <- trigrams) {
+      var i = 0
+      while (i < ngram_features.size) {
+        val ngram_feature = ngram_features(i)
+
+        if (trigram.size == 3 && trigram == ngram_feature) {
           feature_vector(i) += 1
         }
 

@@ -8,17 +8,15 @@ import org.apache.spark.streaming.kafka010._
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 
-object LanguageDetection {
+object StreamingLanguageDetection {
   def main(args: Array[String]): Unit = {
 
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
     // Spark Streaming Configuration
-    val conf = new SparkConf().setAppName("LanguageDetection").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("StreamingLanguageDetection").setMaster("local[*]")
     val ssc = new StreamingContext(conf, Seconds(1)) // Spark Streaming Context, Batch Every 1 Second
-
-//    val sc = new SparkContext(conf)
 
     // Kafka Configuration
     val kafkaParams = Map("bootstrap.servers" -> "localhost:9092",
@@ -42,12 +40,14 @@ object LanguageDetection {
       // Batch of tweets
       var tweets = rdd.map(_.value).collect().toList
 
-      for (tweet <- tweets) {
-        var data = TextProcessing.create_feature_vector(tweet)
+      if (current_k < k) {
+        for (tweet <- tweets) {
+          var data = TextProcessing.create_feature_vector(tweet)
 
-        if (current_k < k) {
-          streaming_kmeans.addCenter(data)
-          current_k += 1
+          if (current_k < k) {
+            streaming_kmeans.addCenter(data)
+            current_k += 1
+          }
         }
       }
 
